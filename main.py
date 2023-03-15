@@ -3,57 +3,68 @@ import data_preprocessing
 import model_training
 import results_analysis
 import pandas as pd
+from tqdm import tqdm
+import time
 
-def main():
-    print("data_collection module")
-    # Set up the Chrome browser driver
-    driver = data_collection.setup_chrome_driver()
+# Set the desired YouTube channel URL
+channel_url = "https://www.youtube.com/c/ExampleChannel/videos"
 
-    # Collect video metadata
-    channel_url = "https://www.youtube.com/c/ExampleChannel/videos"  # Replace with the desired YouTube channel URL
-    video_urls = data_collection.get_video_urls_from_channel(driver, channel_url)
-    video_metadata = []
+# Set up the Chrome driver
+driver = data_collection.setup_chrome_driver()
 
-    for url in video_urls:
-        try:
-            metadata = data_collection.collect_video_metadata(driver, url)
-            video_metadata.append(metadata)
-        except Exception as e:
-            print(f"Error collecting metadata for {url}: {e}")
+# Get video URLs
+video_urls = data_collection.get_video_urls_from_channel(driver, channel_url)
 
-    # Close the Chrome browser driver
-    data_collection.quit_chrome_driver(driver)
+# Initialize progress bar
+total_steps = 6
+progress_bar = tqdm(total=total_steps, desc="Overall progress")
 
-    # Create a DataFrame from the collected metadata
-    metadata_df = pd.DataFrame(video_metadata)
+# Collect video metadata
+video_metadata_list = []
+start_time = time.time()
 
-    print("data_preprocessing module")
-    # Preprocess the data by extracting audio features
-    preprocessed_data = data_preprocessing.preprocess_data(metadata_df)
+for video_url in video_urls:
+    video_metadata = data_collection.collect_video_metadata(driver, video_url)
+    video_metadata_list.append(video_metadata)
 
-    # Add class labels to the preprocessed data
-    preprocessed_data['class_label'] = ...  # Add class labels based on your project's requirements
+progress_bar.update(1)
+elapsed_time = time.time() - start_time
+remaining_time = (elapsed_time / progress_bar.n) * (progress_bar.total - progress_bar.n)
+progress_bar.set_postfix(remaining_time="{:.1f}s".format(remaining_time), refresh=False)
 
-    print("model_training module")
-    # Load the pre-trained model
-    input_shape = (20, 3)  # Set the input shape to match your audio features
-    num_classes = ...  # Set the number of classes based on your project's requirements
-    model = model_training.load_pretrained_model(input_shape, num_classes)
+# Quit the Chrome driver
+data_collection.quit_chrome_driver(driver)
 
-    # Prepare the dataset
-    X_train, X_test, y_train, y_test = model_training.prepare_dataset(preprocessed_data, num_classes)
+# Convert the video metadata list to a pandas DataFrame
+metadata_df = pd.DataFrame(video_metadata_list)
 
-    # Train the model
-    epochs = 10
-    batch_size = 32
-    model, history = model_training.train_model(model, X_train, y_train, X_test, y_test, epochs, batch_size)
+# Save the metadata to a CSV file
+metadata_df.to_csv("video_metadata.csv", index=False)
+progress_bar.update(1)
+elapsed_time = time.time() - start_time
+remaining_time = (elapsed_time / progress_bar.n) * (progress_bar.total - progress_bar.n)
+progress_bar.set_postfix(remaining_time="{:.1f}s".format(remaining_time), refresh=False)
 
-    # Evaluate the model
-    test_loss, test_accuracy = model_training.evaluate_model(model, X_test, y_test)
+# Preprocess the data
+preprocessed_data = data_preprocessing.preprocess_data(metadata_df)
+progress_bar.update(1)
+elapsed_time = time.time() - start_time
+remaining_time = (elapsed_time / progress_bar.n) * (progress_bar.total - progress_bar.n)
+progress_bar.set_postfix(remaining_time="{:.1f}s".format(remaining_time), refresh=False)
 
-    print("results_analysis module")
-    # Plot the training history
-    results_analysis.plot_training_history(history)
+# Train the model
+trained_model = model_training.train_model(preprocessed_data)
+progress_bar.update(1)
+elapsed_time = time.time() - start_time
+remaining_time = (elapsed_time / progress_bar.n) * (progress_bar.total - progress_bar.n)
+progress_bar.set_postfix(remaining_time="{:.1f}s".format(remaining_time), refresh=False)
 
-if __name__ == "__main__":
-    main()
+# Analyze the results
+results_analysis.analyze_results(trained_model, preprocessed_data)
+progress_bar.update(1)
+elapsed_time = time.time() - start_time
+remaining_time = (elapsed_time / progress_bar.n) * (progress_bar.total - progress_bar.n)
+progress_bar.set_postfix(remaining_time="{:.1f}s".format(remaining_time), refresh=False)
+
+# Close progress bar
+progress_bar.close()

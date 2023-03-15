@@ -5,6 +5,7 @@ from tensorflow.keras.layers import Dense, Dropout, GlobalAveragePooling2D
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.utils import to_categorical
 from sklearn.model_selection import train_test_split
+import tensorflow as tf
 
 def load_pretrained_model(input_shape, num_classes):
     base_model = VGG16(weights='imagenet', include_top=False, input_shape=input_shape)
@@ -38,7 +39,10 @@ def train_model(model, X_train, y_train, X_val, y_val, epochs=10, batch_size=32)
     optimizer = Adam(lr=0.0001)
     model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
 
-    history = model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=epochs, batch_size=batch_size)
+    # Place the model and data on the GPU
+    with tf.device('/gpu:0'):
+        history = model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=epochs, batch_size=batch_size)
+
     return model, history
 
 def evaluate_model(model, X_test, y_test):

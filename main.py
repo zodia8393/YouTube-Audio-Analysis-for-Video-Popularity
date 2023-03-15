@@ -10,7 +10,8 @@ def main():
     driver = data_collection.setup_chrome_driver()
 
     # Collect video metadata
-    video_urls = [...]  # Replace with a list of video URLs
+    channel_url = "https://www.youtube.com/c/ExampleChannel/videos"  # Replace with the desired YouTube channel URL
+    video_urls = data_collection.get_video_urls_from_channel(driver, channel_url)
     video_metadata = []
 
     for url in video_urls:
